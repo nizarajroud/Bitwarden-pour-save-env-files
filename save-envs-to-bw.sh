@@ -10,12 +10,7 @@ if [ -z "$BW_SESSION" ]; then
 fi
 
 # Vérifier si le dossier ENV Files existe
-FOLDER_ID=$(bw list folders | jq -r '.[] | select(.name=="ENV Files") | .id')
-
-if [ -z "$FOLDER_ID" ]; then
-    echo "Création du dossier ENV Files..."
-    FOLDER_ID=$(bw get template folder | jq '.name="ENV Files"' | bw encode | bw create folder | jq -r '.id')
-fi
+FOLDER_ID="69254a41-318f-4485-9b3b-b3ce016e8b4d"
 
 # Construire la liste des projets depuis .env
 declare -A PROJECTS
@@ -35,23 +30,32 @@ for PROJECT_NAME in "${!PROJECTS[@]}"; do
     ITEM_NAME="$PROJECT_NAME - .env"
     
     # Vérifier si l'item existe déjà
-    EXISTING_ID=$(bw list items --search "$ITEM_NAME" | jq -r ".[0].id // empty")
+    EXISTING_ID=$(bw list items --search "$ITEM_NAME" 2>/dev/null | jq -r ".[0].id // empty" 2>/dev/null)
     
     if [ -n "$EXISTING_ID" ]; then
-        # Mettre à jour
+        # Mettre à jour et assigner au dossier
         ITEM=$(bw get item "$EXISTING_ID")
-        UPDATED=$(echo "$ITEM" | jq --arg notes "$(cat "$ENV_FILE")" '.notes=$notes')
-        echo "$UPDATED" | bw encode | bw edit item "$EXISTING_ID" > /dev/null
+        UPDATED=$(echo "$ITEM" | jq --arg notes "$(cat "$ENV_FILE")" --arg folderId "$FOLDER_ID" '.notes=$notes | .folderId=$folderId')
+        echo "$UPDATED" | bw encode | bw edit item "$EXISTING_ID" > /dev/null 2>&1
         echo "✅ Mis à jour: $ITEM_NAME"
     else
-        # Créer nouveau
-        TEMPLATE=$(bw get template item)
-        NEW_ITEM=$(echo "$TEMPLATE" | jq \
-            --arg name "$ITEM_NAME" \
-            --arg notes "$(cat "$ENV_FILE")" \
-            --arg folderId "$FOLDER_ID" \
-            '.type=2 | .name=$name | .notes=$notes | .folderId=$folderId')
-        echo "$NEW_ITEM" | bw encode | bw create item > /dev/null
+        # Créer nouveau item avec JSON manuel
+        ENV_CONTENT=$(cat "$ENV_FILE" | jq -Rs .)
+        
+        ITEM_JSON=$(cat <<EOF
+{
+  "type": 2,
+  "name": "$ITEM_NAME",
+  "notes": $ENV_CONTENT,
+  "folderId": "$FOLDER_ID",
+  "secureNote": {
+    "type": 0
+  }
+}
+EOF
+)
+        
+        echo "$ITEM_JSON" | bw encode | bw create item > /dev/null 2>&1
         echo "✅ Créé: $ITEM_NAME"
     fi
 done
