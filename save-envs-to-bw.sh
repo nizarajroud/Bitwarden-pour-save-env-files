@@ -9,8 +9,17 @@ if [ -z "$BW_SESSION" ]; then
     export BW_SESSION=$(bw unlock --raw)
 fi
 
-# Vérifier si le dossier ENV Files existe
-FOLDER_ID="69254a41-318f-4485-9b3b-b3ce016e8b4d"
+# Vérifier et obtenir le FOLDER_ID dynamiquement
+FOLDER_NAME="ENV Files"
+FOLDER_ID=$(bw list folders | jq -r ".[] | select(.name==\"$FOLDER_NAME\") | .id")
+
+if [ -z "$FOLDER_ID" ]; then
+    echo "❌ Dossier '$FOLDER_NAME' introuvable. Création..."
+    FOLDER_ID=$(bw get template folder | jq --arg name "$FOLDER_NAME" '.name=$name' | bw encode | bw create folder | jq -r '.id')
+    echo "✅ Dossier créé avec ID: $FOLDER_ID"
+else
+    echo "📁 Dossier trouvé: $FOLDER_ID"
+fi
 
 # Construire la liste des projets depuis .env
 declare -A PROJECTS
@@ -37,7 +46,8 @@ for PROJECT_NAME in "${!PROJECTS[@]}"; do
         ITEM=$(bw get item "$EXISTING_ID")
         UPDATED=$(echo "$ITEM" | jq --arg notes "$(cat "$ENV_FILE")" --arg folderId "$FOLDER_ID" '.notes=$notes | .folderId=$folderId')
         echo "$UPDATED" | bw encode | bw edit item "$EXISTING_ID" > /dev/null 2>&1
-        echo "✅ Mis à jour: $ITEM_NAME"
+        bw sync > /dev/null 2>&1
+        echo "✅ Mis à jour: $ITEM_NAME (Dossier: $FOLDER_ID)"
     else
         # Créer nouveau item avec JSON manuel
         ENV_CONTENT=$(cat "$ENV_FILE" | jq -Rs .)
@@ -55,12 +65,21 @@ for PROJECT_NAME in "${!PROJECTS[@]}"; do
 EOF
 )
         
-        echo "$ITEM_JSON" | bw encode | bw create item > /dev/null 2>&1
-        echo "✅ Créé: $ITEM_NAME"
+        CREATED_ID=$(echo "$ITEM_JSON" | bw encode | bw create item 2>&1 | jq -r '.id // empty')
+        
+        if [ -n "$CREATED_ID" ]; then
+            bw sync > /dev/null 2>&1
+            echo "✅ Créé: $ITEM_NAME (ID: $CREATED_ID, Dossier: $FOLDER_ID)"
+        else
+            echo "❌ Échec de création: $ITEM_NAME"
+        fi
     fi
 done
 
-# Synchroniser avec le cloud
+# Synchronisation finale
 bw sync
 echo ""
 echo "🎉 Tous vos .env sont sauvegardés dans Bitwarden!"
+echo ""
+echo "📊 Vérification des items dans le dossier '$FOLDER_NAME':"
+bw list items --folderid "$FOLDER_ID" | jq -r '.[] | "  - \(.name)"'

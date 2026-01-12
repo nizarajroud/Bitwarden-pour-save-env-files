@@ -1,0 +1,38 @@
+nohup: ignoring input
+Initializing n8n process
+n8n ready on ::, port 5678
+Migrations in progress, please do NOT stop the process.
+Starting migration AddCreatorIdToProjectTable1764276827837
+Finished migration AddCreatorIdToProjectTable1764276827837
+Starting migration CreateDynamicCredentialResolverTable1764682447000
+Finished migration CreateDynamicCredentialResolverTable1764682447000
+Starting migration AddDynamicCredentialEntryTable1764689388394
+Finished migration AddDynamicCredentialEntryTable1764689388394
+Starting migration AddResolvableFieldsToCredentials1764689448000
+Finished migration AddResolvableFieldsToCredentials1764689448000
+Starting migration AddIconToAgentTable1765788427674
+Finished migration AddIconToAgentTable1765788427674
+Starting migration AddAgentIdForeignKeys1765886667897
+Finished migration AddAgentIdForeignKeys1765886667897
+Starting migration AddWorkflowVersionIdToExecutionData1765892199653
+Finished migration AddWorkflowVersionIdToExecutionData1765892199653
+Starting migration AddWorkflowPublishScopeToProjectRoles1766064542000
+Added workflow:publish scope to project roles with workflow:update
+Finished migration AddWorkflowPublishScopeToProjectRoles1766064542000
+Starting migration AddChatMessageIndices1766068346315
+Finished migration AddChatMessageIndices1766068346315
+n8n Task Broker ready on 127.0.0.1, port 5679
+Failed to start Python task runner in internal mode. because its virtual environment is missing from this system. Launching a Python runner in internal mode is intended only for debugging and is not recommended for production. Users are encouraged to deploy in external mode. See: https://docs.n8n.io/hosting/configuration/task-runners/#setting-up-external-mode
+[license SDK] Skipping renewal on init: license cert is not due for renewal
+Registered runner "JS Task Runner" (IKPXJ3hWH6ESfQIIV7idR) 
+Currently active workflows:
+   - GNL (ID: jQ9zKZRa4JbOgEdG)
+[Recovery] Logs available, amended execution
+Found unfinished executions: 234
+This could be due to a crash of an active workflow or a restart of n8n
+Version: 2.2.6
+Start Active Workflows:
+Activated workflow "GNL" (ID: jQ9zKZRa4JbOgEdG)
+
+Editor is now accessible via:
+http://localhost:5678

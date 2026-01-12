@@ -3,7 +3,7 @@ bw --version
 
 config sur keepass 
 
-
+bw logout && bw login
 
 # 1. Déverrouiller une fois par session
 export BW_SESSION=$(bw unlock --raw)
